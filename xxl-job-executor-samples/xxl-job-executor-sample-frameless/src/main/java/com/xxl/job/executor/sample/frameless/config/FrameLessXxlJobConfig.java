@@ -31,9 +31,11 @@ public class FrameLessXxlJobConfig {
     public void initXxlJobExecutor() {
 
         // load executor prop
+        //加载xxl-job-executor.properties文件
         Properties xxlJobProp = loadProperties("xxl-job-executor.properties");
 
         // init executor
+        //创建普通的任务执行器
         xxlJobExecutor = new XxlJobSimpleExecutor();
         xxlJobExecutor.setAdminAddresses(xxlJobProp.getProperty("xxl.job.admin.addresses"));
         xxlJobExecutor.setAccessToken(xxlJobProp.getProperty("xxl.job.accessToken"));
@@ -45,10 +47,12 @@ public class FrameLessXxlJobConfig {
         xxlJobExecutor.setLogRetentionDays(Integer.valueOf(xxlJobProp.getProperty("xxl.job.executor.logretentiondays")));
 
         // registry job bean
+        //注册定时任务的bean
         xxlJobExecutor.setXxlJobBeanList(Arrays.asList(new SampleXxlJob()));
 
         // start executor
         try {
+            //启动执行器
             xxlJobExecutor.start();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

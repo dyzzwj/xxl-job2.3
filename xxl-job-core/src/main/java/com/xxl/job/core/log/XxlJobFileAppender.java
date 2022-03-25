@@ -35,6 +35,7 @@ public class XxlJobFileAppender {
 		if (logPath!=null && logPath.trim().length()>0) {
 			logBasePath = logPath;
 		}
+		//创建父目录
 		// mk base dir
 		File logPathDir = new File(logBasePath);
 		if (!logPathDir.exists()) {
@@ -42,6 +43,7 @@ public class XxlJobFileAppender {
 		}
 		logBasePath = logPathDir.getPath();
 
+		//创建脚本代码目录
 		// mk glue dir
 		File glueBaseDir = new File(logPathDir, "gluesource");
 		if (!glueBaseDir.exists()) {

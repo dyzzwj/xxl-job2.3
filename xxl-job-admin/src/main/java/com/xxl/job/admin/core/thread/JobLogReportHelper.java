@@ -30,6 +30,12 @@ public class JobLogReportHelper {
     public void start(){
         logrThread = new Thread(new Runnable() {
 
+
+            /**
+             *  两件事：
+             * 第一，统计当前时间前三天的触发任务的数量、运行中的任务的数量、成功的任务数量、任务失败的数量，然后保存在数据库中。
+             * 第二，根据配置的保存日志的过期时间，将已经过期的日志从数据库中查出来，然后清理过期的日志
+             */
             @Override
             public void run() {
 
@@ -46,6 +52,7 @@ public class JobLogReportHelper {
 
                             // today
                             Calendar itemDay = Calendar.getInstance();
+                            //减去3天
                             itemDay.add(Calendar.DAY_OF_MONTH, -i);
                             itemDay.set(Calendar.HOUR_OF_DAY, 0);
                             itemDay.set(Calendar.MINUTE, 0);
@@ -54,6 +61,7 @@ public class JobLogReportHelper {
 
                             Date todayFrom = itemDay.getTime();
 
+                            //今天的23点59分59秒
                             itemDay.set(Calendar.HOUR_OF_DAY, 23);
                             itemDay.set(Calendar.MINUTE, 59);
                             itemDay.set(Calendar.SECOND, 59);
@@ -67,7 +75,7 @@ public class JobLogReportHelper {
                             xxlJobLogReport.setRunningCount(0);
                             xxlJobLogReport.setSucCount(0);
                             xxlJobLogReport.setFailCount(0);
-
+                            //统计当前时间前三天的触发任务的数量、运行中的任务的数量、成功的任务数量、任务失败的数量
                             Map<String, Object> triggerCountMap = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLogReport(todayFrom, todayTo);
                             if (triggerCountMap!=null && triggerCountMap.size()>0) {
                                 int triggerDayCount = triggerCountMap.containsKey("triggerDayCount")?Integer.valueOf(String.valueOf(triggerCountMap.get("triggerDayCount"))):0;
@@ -81,6 +89,7 @@ public class JobLogReportHelper {
                             }
 
                             // do refresh
+                            //将上面的统计数据保存在数据库中
                             int ret = XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().update(xxlJobLogReport);
                             if (ret < 1) {
                                 XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().save(xxlJobLogReport);
@@ -109,8 +118,10 @@ public class JobLogReportHelper {
                         // clean expired log
                         List<Long> logIds = null;
                         do {
+                            //根据配置的保存日志的过期时间，将已经过期的日志从数据库中查出来
                             logIds = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findClearLogIds(0, 0, clearBeforeTime, 0, 1000);
                             if (logIds!=null && logIds.size()>0) {
+                                //清理过期的日志
                                 XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().clearLog(logIds);
                             }
                         } while (logIds!=null && logIds.size()>0);

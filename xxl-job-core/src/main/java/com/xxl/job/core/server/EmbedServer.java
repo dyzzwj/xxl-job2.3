@@ -41,7 +41,9 @@ public class EmbedServer {
             public void run() {
 
                 // param
+                //boss group
                 EventLoopGroup bossGroup = new NioEventLoopGroup();
+                //workerGroup
                 EventLoopGroup workerGroup = new NioEventLoopGroup();
                 ThreadPoolExecutor bizThreadPool = new ThreadPoolExecutor(
                         0,
@@ -65,6 +67,7 @@ public class EmbedServer {
 
                 try {
                     // start server
+                    //netty server启动引导类
                     ServerBootstrap bootstrap = new ServerBootstrap();
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
@@ -72,20 +75,25 @@ public class EmbedServer {
                                 @Override
                                 public void initChannel(SocketChannel channel) throws Exception {
                                     channel.pipeline()
+                                            //心跳检测handler
                                             .addLast(new IdleStateHandler(0, 0, 30 * 3, TimeUnit.SECONDS))  // beat 3N, close if idle
+                                            //编解码handler
                                             .addLast(new HttpServerCodec())
                                             .addLast(new HttpObjectAggregator(5 * 1024 * 1024))  // merge request & reponse to FULL
+                                            //请求处理器
                                             .addLast(new EmbedHttpServerHandler(executorBiz, accessToken, bizThreadPool));
                                 }
                             })
                             .childOption(ChannelOption.SO_KEEPALIVE, true);
 
                     // bind
+                    //绑定端口
                     ChannelFuture future = bootstrap.bind(port).sync();
 
                     logger.info(">>>>>>>>>>> xxl-job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
 
                     // start registry
+                    //启动注册线程
                     startRegistry(appname, address);
 
                     // wait util stop

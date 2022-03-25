@@ -16,6 +16,7 @@ public class FramelessApplication {
 
         try {
             // start
+            //启动执行器
             FrameLessXxlJobConfig.getInstance().initXxlJobExecutor();
 
             // Blocks until interrupted

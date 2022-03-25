@@ -54,6 +54,10 @@ public class TriggerCallbackThread {
             return;
         }
 
+        //回调线程
+        /**
+         * 将定时任务执行的结果回调给admin保存在数据库中，调用AdminBizClient的callback方法回调写回admin服务的数据库中
+         */
         // callback
         triggerCallbackThread = new Thread(new Runnable() {
 
@@ -63,6 +67,8 @@ public class TriggerCallbackThread {
                 // normal callback
                 while(!toStop){
                     try {
+                        //定时任务运行完成以后，将运行以后的结果保存在队列中，每次回调都是从队列中获取定时任务的结果写回admin服务
+                        //从回调队列获取数据
                         HandleCallbackParam callback = getInstance().callBackQueue.take();
                         if (callback != null) {
 
@@ -73,6 +79,7 @@ public class TriggerCallbackThread {
 
                             // callback, will retry if error
                             if (callbackParamList!=null && callbackParamList.size()>0) {
+                                //调用AdminBizClient的callback方法回调写回admin服务的数据库中
                                 doCallback(callbackParamList);
                             }
                         }
@@ -104,12 +111,17 @@ public class TriggerCallbackThread {
         triggerCallbackThread.start();
 
 
+        //重试回调线程
+        /**
+         * 将错误的回调重新进行回调
+         */
         // retry
         triggerRetryCallbackThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while(!toStop){
                     try {
+                        //重新回调错误的回调
                         retryFailCallbackFile();
                     } catch (Exception e) {
                         if (!toStop) {
@@ -163,8 +175,10 @@ public class TriggerCallbackThread {
     private void doCallback(List<HandleCallbackParam> callbackParamList){
         boolean callbackRet = false;
         // callback, will retry if error
+        //遍历执行器的客户端
         for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
             try {
+                //将任务执行结果回调写回admin服务的数据库中
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
                 if (callbackResult!=null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
                     callbackLog(callbackParamList, "<br>----------- xxl-job job callback finish.");

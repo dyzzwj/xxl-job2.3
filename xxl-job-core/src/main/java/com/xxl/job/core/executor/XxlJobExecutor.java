@@ -64,19 +64,25 @@ public class XxlJobExecutor  {
     // ---------------------- start + stop ----------------------
     public void start() throws Exception {
 
+        //初始化日志路径
         // init logpath
         XxlJobFileAppender.initLogPath(logPath);
 
+
+        //初始化admin的客户端
         // init invoker, admin-client
         initAdminBizList(adminAddresses, accessToken);
 
 
+        //初始化日志清理线程
         // init JobLogFileCleanThread
         JobLogFileCleanThread.getInstance().start(logRetentionDays);
 
+        //初始化回调线程池
         // init TriggerCallbackThread
         TriggerCallbackThread.getInstance().start();
 
+        //初始化执行器服务 启动了一个netty服务器，用于执行器接收admin的http请求
         // init executor-server
         initEmbedServer(address, ip, port, appname, accessToken);
     }
@@ -113,16 +119,29 @@ public class XxlJobExecutor  {
 
     // ---------------------- admin-client (rpc invoker) ----------------------
     private static List<AdminBiz> adminBizList;
+
+    /**
+     * 遍历调度器的地址，即admin服务的地址，adminAddresses地址是以逗号分隔的，每一个admin地址就创建admin客户端AdminBizClient，
+     * AdminBizClient是执行器与admin服务通信的客户端，是通过http进行通信的，通过AdminBizClient执行器就可以注册执行器、
+     * 删除执行器以及将定时任务的结果回调给admin保存起来。最后将创建好的AdminBizClient保存到adminBizList中
+     * @param adminAddresses
+     * @param accessToken
+     * @throws Exception
+     */
     private void initAdminBizList(String adminAddresses, String accessToken) throws Exception {
+        //遍历调度中心的地址
         if (adminAddresses!=null && adminAddresses.trim().length()>0) {
+            //调度器地址以逗号分割
             for (String address: adminAddresses.trim().split(",")) {
                 if (address!=null && address.trim().length()>0) {
 
+                    //初始化amin客户端
                     AdminBiz adminBiz = new AdminBizClient(address.trim(), accessToken);
 
                     if (adminBizList == null) {
                         adminBizList = new ArrayList<AdminBiz>();
                     }
+                    //保存到List中
                     adminBizList.add(adminBiz);
                 }
             }
@@ -154,6 +173,9 @@ public class XxlJobExecutor  {
 
         // start
         embedServer = new EmbedServer();
+        /**
+         * 启动netty server 处理调度中心发的请求接收admin发送的空闲检测请求、运行定时任务的请求、停止运行定时任务的请求、获取日志的请求
+         */
         embedServer.start(address, port, appname, accessToken);
     }
 
@@ -176,6 +198,7 @@ public class XxlJobExecutor  {
     }
     public static IJobHandler registJobHandler(String name, IJobHandler jobHandler){
         logger.info(">>>>>>>>>>> xxl-job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
+        //保存到集合中
         return jobHandlerRepository.put(name, jobHandler);
     }
 

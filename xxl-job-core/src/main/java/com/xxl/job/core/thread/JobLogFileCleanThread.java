@@ -40,6 +40,7 @@ public class JobLogFileCleanThread {
                 while (!toStop) {
                     try {
                         // clean log dir, over logRetentionDays
+                        //获取日志目录下的所有文件 日志文件形式如logPath/yyyy-MM-dd/9999.log
                         File[] childDirs = new File(XxlJobFileAppender.getLogPath()).listFiles();
                         if (childDirs!=null && childDirs.length>0) {
 
@@ -49,7 +50,7 @@ public class JobLogFileCleanThread {
                             todayCal.set(Calendar.MINUTE,0);
                             todayCal.set(Calendar.SECOND,0);
                             todayCal.set(Calendar.MILLISECOND,0);
-
+                            //今天0时0分0秒
                             Date todayDate = todayCal.getTime();
 
                             for (File childFile: childDirs) {
@@ -74,6 +75,8 @@ public class JobLogFileCleanThread {
                                     continue;
                                 }
 
+                                //判断日志文件是否过期
+                                //过期时间是配置的，如果当前时间减去日志文件创建时间（yyyy-MM-dd）大于配置的日志清理天数，说明日志文件已经过期，一般配置只保存30天的日志，30天以前的日志都删除掉
                                 if ((todayDate.getTime()-logFileCreateDate.getTime()) >= logRetentionDays * (24 * 60 * 60 * 1000) ) {
                                     FileUtil.deleteRecursively(childFile);
                                 }

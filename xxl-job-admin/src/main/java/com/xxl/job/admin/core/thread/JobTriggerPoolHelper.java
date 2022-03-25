@@ -21,10 +21,14 @@ public class JobTriggerPoolHelper {
     // ---------------------- trigger pool ----------------------
 
     // fast/slow thread pool
+    /**
+     * 默认情况下，会使用fastTriggerPool。如果1分钟窗口期内任务耗时达500ms超过10次，则该窗口期内判定为慢任务，慢任务自动降级进入”Slow”线程池，避免耗尽调度线程，提高系统稳定性；
+     */
     private ThreadPoolExecutor fastTriggerPool = null;
     private ThreadPoolExecutor slowTriggerPool = null;
 
     public void start(){
+        //快速触发线程池
         fastTriggerPool = new ThreadPoolExecutor(
                 10,
                 XxlJobAdminConfig.getAdminConfig().getTriggerPoolFastMax(),
@@ -38,6 +42,7 @@ public class JobTriggerPoolHelper {
                     }
                 });
 
+        //慢速触发线程池
         slowTriggerPool = new ThreadPoolExecutor(
                 10,
                 XxlJobAdminConfig.getAdminConfig().getTriggerPoolSlowMax(),
@@ -77,8 +82,10 @@ public class JobTriggerPoolHelper {
                            final String addressList) {
 
         // choose thread pool
+        //默认是快线程池
         ThreadPoolExecutor triggerPool_ = fastTriggerPool;
         AtomicInteger jobTimeoutCount = jobTimeoutCountMap.get(jobId);
+        //默认是用快速调度器调度任务的，当缓存中等待被调度的同一个任务的数量大于10的时候，就用慢速调度器调度任务
         if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {      // job-timeout 10 times in 1 min
             triggerPool_ = slowTriggerPool;
         }

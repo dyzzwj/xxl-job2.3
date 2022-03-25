@@ -33,10 +33,13 @@ public class XxlJobSimpleExecutor extends XxlJobExecutor {
     public void start() {
 
         // init JobHandler Repository (for method)
+        //初始化任务处理器
         initJobHandlerMethodRepository(xxlJobBeanList);
 
         // super start
         try {
+            //调用父类的start方法
+            //XxlJobExecutor.start
             super.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -53,6 +56,7 @@ public class XxlJobSimpleExecutor extends XxlJobExecutor {
             return;
         }
 
+        //遍历定时任务bean
         // init job handler from method
         for (Object bean: xxlJobBeanList) {
             // method
@@ -60,14 +64,18 @@ public class XxlJobSimpleExecutor extends XxlJobExecutor {
             if (methods==null || methods.length==0) {
                 continue;
             }
+            //遍历定时任务bean里的方法
             for (Method executeMethod : methods) {
 
                 // anno
+                //获取方法上的@XxlJob注解
                 XxlJob xxlJob = executeMethod.getAnnotation(XxlJob.class);
+                //没有则不处理
                 if (xxlJob == null) {
                     continue;
                 }
 
+                //任务名 调度中心通过任务名调度任务
                 String name = xxlJob.value();
                 if (name.trim().length() == 0) {
                     throw new RuntimeException("xxl-job method-jobhandler name invalid, for[" + bean.getClass() + "#" + executeMethod.getName() + "] .");
@@ -110,6 +118,7 @@ public class XxlJobSimpleExecutor extends XxlJobExecutor {
                 }
 
                 // registry jobhandler
+                //注册jobHandler
                 registJobHandler(name, new MethodJobHandler(bean, executeMethod, initMethod, destroyMethod));
 
 
